@@ -1,0 +1,8 @@
+name = Islandora Solr Collection Family Tree
+description = "Proof of concept Islandora module to test using Solr to get an object's collection family tree."
+package = Islandora Tools
+version = 7.x-dev
+core = 7.x
+php = 5.3
+dependencies[] = islandora
+dependencies[] = islandora_solr
