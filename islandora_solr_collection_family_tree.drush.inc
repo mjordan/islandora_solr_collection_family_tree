@@ -47,20 +47,49 @@ function drush_islandora_solr_collection_family_tree_islandora_get_family_tree()
     }
   }
 
-  $parent_memberships = islandora_solr_collection_family_tree_query_solr(drush_get_option('pid'));
-  if ($parent_memberships->RELS_EXT_isMemberOfCollection_uri_mt) {
-    foreach ($parent_memberships->RELS_EXT_isMemberOfCollection_uri_mt as $parent) {
-      drush_print("Direct parent collection: " . $parent);
-    }
-  }
-  if ($parent_memberships->RELS_EXT_isConstituentOf_uri_mt) {
-    foreach ($parent_memberships->RELS_EXT_isConstituentOf_uri_mt as $compound_parent) {
-      drush_print("Direct parent object (compound): " . $compound_parent);
-    }
-  }
-  if ($parent_memberships->RELS_EXT_isMemberOf_uri_mt) {
-    foreach ($parent_memberships->RELS_EXT_isMemberOf_uri_mt as $page_parent) {
-      drush_print("Direct parent object (paged): " . $page_parent);
+  $ancestors = islandora_solr_collection_family_tree_get_ancestors(drush_get_option('pid'));
+  $tree = implode(', ', $ancestors);
+  drush_print('Ancestors of ' . drush_get_option('pid') . ' are ' . $tree);
+}
+
+/**
+ * Recursive function to walk up the collection/parent tree.
+ *
+ * @param string $pid
+ *   The PID of the object to start at.
+ *
+ * @return array
+ *   An array containing all of the collection or parent objects
+ *   PIDs the start object is under.
+ */
+function islandora_solr_collection_family_tree_get_ancestors($pid) {
+  $rels = array(
+    'RELS_EXT_isMemberOfCollection_uri_mt',
+    'RELS_EXT_isConstituentOf_uri_mt',
+    'RELS_EXT_isMemberOf_uri_mt',
+  );
+
+  $ancestors = array();
+  foreach ($rels as $rel) {
+    $parent_memberships = islandora_solr_collection_family_tree_query_solr($pid);
+    if ($parent_memberships->{$rel}) {
+      foreach ($parent_memberships->{$rel} as $parent) {
+        $parent = preg_replace('#info:fedora/#', '', $parent);
+        $ancestors[] = $parent;
+        if ($parent == variable_get('islandora_repository_pid', 'islandora:root')) {
+          return $ancestors;
+        }
+        $grandparents = islandora_solr_collection_family_tree_get_ancestors($parent);
+        if (!is_null($grandparents)) {
+          foreach ($grandparents as $grandparent) {
+            $grandparent = preg_replace('#info:fedora/#', '', $grandparent);
+            $ancestors[] = $grandparent;
+            if ($grandparent == variable_get('islandora_repository_pid', 'islandora:root')) {
+              return $ancestors;
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -83,7 +112,7 @@ function islandora_solr_collection_family_tree_query_solr($pid) {
   if (!preg_match('#^http://#', $solr_url)) {
     $solr_url = 'http://' . $solr_url;
   }
-  $query = $solr_url . '/select?version=1.2&rows=1000000&wt=json&json.nl=map&' .
+  $query = $solr_url . '/select?version=1.2&rows=1&wt=json&json.nl=map&' .
     'fl=RELS_EXT_isMemberOfCollection_uri_mt,RELS_EXT_isMemberOf_uri_mt,RELS_EXT_isConstituentOf_uri_mt&' .
     'q=PID:' . $pid;
   $raw_result = drupal_http_request($query);
