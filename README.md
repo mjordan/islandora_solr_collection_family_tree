@@ -7,7 +7,11 @@ The best way to get an object's collection membership is to do a SPARQL query ag
 Do a query Solr like this: `q=PID:islandora\:something&fl=RELS_EXT_isMemberOfCollection_uri_mt,RELS_EXT_isMemberOf_uri_mt,RELS_EXT_isConstituentOf_uri_mt`
 
 * RELS_EXT_isMemberOfCollection_uri_mt, if present, will contain the object's collection memberships. Additional queries must be made to get the ancestor collections all the way up to the root collection.
-* RELS_EXT_isMemberOf_uri_mt and RELS_EXT_isConstituentOf_uri_mt, if present, will contain the object's parent PIDs; if there are values for these, additional queries must be made to get the ancestor collections all the way up to the root collection.
+* RELS_EXT_isMemberOf_uri_mt and RELS_EXT_isConstituentOf_uri_mt, if present, will contain the object's parent PIDs for paged and child compound objects respectively; if there are values for these, additional queries must be made to get the ancestor collections all the way up to the root collection.
+
+# Basic usage
+
+`drush --user=admin igft --pid=booktest:4`
 
 # Possible performance gains
 

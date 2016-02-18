@@ -49,9 +49,18 @@ function drush_islandora_solr_collection_family_tree_islandora_get_family_tree()
 
   $parent_memberships = islandora_solr_collection_family_tree_query_solr(drush_get_option('pid'));
   if ($parent_memberships->RELS_EXT_isMemberOfCollection_uri_mt) {
-    // Memberships and parents are arrays.
     foreach ($parent_memberships->RELS_EXT_isMemberOfCollection_uri_mt as $parent) {
-      drush_print($parent);
+      drush_print("Direct parent collection: " . $parent);
+    }
+  }
+  if ($parent_memberships->RELS_EXT_isConstituentOf_uri_mt) {
+    foreach ($parent_memberships->RELS_EXT_isConstituentOf_uri_mt as $compound_parent) {
+      drush_print("Direct parent object (compound): " . $compound_parent);
+    }
+  }
+  if ($parent_memberships->RELS_EXT_isMemberOf_uri_mt) {
+    foreach ($parent_memberships->RELS_EXT_isMemberOf_uri_mt as $page_parent) {
+      drush_print("Direct parent object (paged): " . $page_parent);
     }
   }
 }
