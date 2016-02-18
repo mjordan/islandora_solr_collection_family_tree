@@ -1,6 +1,6 @@
 # The problem
 
-We want to determine if an object, regardless of its content model, is in a specific collection or child collection.
+We want to determine if an object, regardless of its content model or status as a child of a compound object, is in a specific collection or child collection.
 
 # The solution
 
@@ -15,7 +15,7 @@ Do a query Solr like this: `q=PID:islandora\:something&fl=RELS_EXT_isMemberOfCol
 
 # Proof of concept code
 
-The drush command supplied with this module implements this approach to getting all of the PIDs of collections and parents an object is part of. 
+The drush command supplied with this module provides a proof of concept implementation this approach to getting all of the PIDs of collections and parents an object is part of. 
 
 For example, 'booktest:4' is a page object in a book ('booktest:1'), which is in the 'islandora:bookCollection' collection. The root collection PID in the repopsitory is 'islandora:root'. Running the following command:
 
@@ -29,7 +29,7 @@ produces the following output:
 Ancestors of booktest:4 are booktest:1, islandora:bookCollection, islandora:root
 ```
 
-Detection of multiple membership is supported, but the output of this drush command simply lists the parents/collections, it doesn't express the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:mycollection', which are both direct children of 'islandora:root':
+This implementation detects multiple collection memberships, but its output simply lists the parents/collections, it doesn't express the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:mycollection', which are both direct children of 'islandora:root':
 
 ```
 drush --user=admin igft --pid=islandora:22
@@ -38,5 +38,6 @@ Ancestors of islandora:22 are islandora:sp_basic_image_collection, test:mytestco
 
 # Possible performance gains
 
-* Can we parallelize the Solr queries that get the membership relationship data?
-* Can we cache an object's family tree so we don't need to repeat Solr queries?
+* Do as few queries as possible, e.g., if we know that the object is not a page, don't look for RELS_EXT_isMemberOf_uri_mt
+* Parallelize the Solr queries that get the membership relationship data
+* Cache an object's family tree so we don't need to repeat the Solr queries
