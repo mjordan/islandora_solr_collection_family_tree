@@ -22,12 +22,12 @@ Perform an initial query Solr for a PID that returns the fields that contain col
 
 # Proof of concept code
 
-The drush command supplied with this module provides a proof of concept implementation this approach to getting all of the PIDs of collections and parents an object is part of. 
+The drush command supplied with this module provides a proof of concept implementation to getting the PIDs of all collections and parents an object is part of. 
 
 For example, 'booktest:10' is a page object in a book ('booktest:1'), which is in the 'islandora:bookCollection' collection. The root collection PID in the repopsitory is 'islandora:root'. Running the following command:
 
 ```
-drush --user=admin igft --pid=booktest10:
+drush --user=admin islandora_get_family_tree --pid=booktest10:
 ```
 
 produces the following output:
@@ -39,13 +39,13 @@ Ancestors of booktest:10 are booktest:1, islandora:bookCollection, islandora:roo
 This implementation detects multiple collection memberships, but its output simply lists the parents/collections, it doesn't express the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:myimagecollection', which are both direct children of 'islandora:root':
 
 ```
-drush --user=admin igft --pid=islandora:22
+drush --user=admin islandora_get_family_tree --pid=islandora:22
 Ancestors of islandora:22 are islandora:sp_basic_image_collection, test:myimagecollection, islandora:root
 ```
 
 # Possible performance optimizations
 
-The proposed approach performs could perform a lot of Solr queries depending on how far the initial object is from the Islandora top-level collection, and the proof of concept performs these queries within nested `foreach` loops. If the general approach is sound, implementations may want to find ways of reducing the number of querieres or optimizing performance in other ways. For example:
+The proposed approach could potentially perform quite a few Solr queries, depending on how far the initial object is from the Islandora top-level collection, and the proof of concept implementation performs these queries within nested `foreach` loops. If the general approach is sound, implementations may want to find ways of reducing the number of queries or optimizing performance in other ways. For example:
 
 * Do as few Solr queries as possible, e.g., if we know that the object is not a page, ignore RELS_EXT_isMemberOf_uri_mt
 * Cache an object's family tree so we don't need to repeat the Solr queries
