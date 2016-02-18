@@ -19,13 +19,17 @@ The drush command supplied with this module implements this approach to getting 
 
 For example, 'booktest:4' is a page object in a book ('booktest:1'), which is in the 'islandora:bookCollection' collection. The root collection PID in the repopsitory is 'islandora:root'. Running the following command:
 
-`drush --user=admin igft --pid=booktest:4`
+```
+drush --user=admin igft --pid=booktest:4
+```
 
 produces the following output:
 
-`Ancestors of booktest:4 are booktest:1, islandora:bookCollection, islandora:root`
+```
+Ancestors of booktest:4 are booktest:1, islandora:bookCollection, islandora:root
+```
 
-Multiple membership is supported, but the output of this drush command simply lists the parents/collections, it doesn't express the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:mycollection', which are both direct children of 'islandora:root':
+Detection of multiple membership is supported, but the output of this drush command simply lists the parents/collections, it doesn't express the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:mycollection', which are both direct children of 'islandora:root':
 
 ```
 drush --user=admin igft --pid=islandora:22
