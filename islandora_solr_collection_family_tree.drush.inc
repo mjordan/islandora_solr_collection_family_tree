@@ -48,6 +48,7 @@ function drush_islandora_solr_collection_family_tree_islandora_get_family_tree()
   }
 
   $ancestors = islandora_solr_collection_family_tree_get_ancestors(drush_get_option('pid'));
+  $ancestors = array_unique($ancestors);
   $tree = implode(', ', $ancestors);
   drush_print('Ancestors of ' . drush_get_option('pid') . ' are ' . $tree);
 }
@@ -64,19 +65,27 @@ function drush_islandora_solr_collection_family_tree_islandora_get_family_tree()
  */
 function islandora_solr_collection_family_tree_get_ancestors($pid) {
   $rels = array(
-    'RELS_EXT_isMemberOfCollection_uri_mt',
     'RELS_EXT_isConstituentOf_uri_mt',
     'RELS_EXT_isMemberOf_uri_mt',
+    'RELS_EXT_isMemberOfCollection_uri_mt',
   );
+
+  $repository_pid = variable_get('islandora_repository_pid', 'islandora:root');
 
   $ancestors = array();
   foreach ($rels as $rel) {
     $parent_memberships = islandora_solr_collection_family_tree_query_solr($pid);
     if ($parent_memberships->{$rel}) {
       foreach ($parent_memberships->{$rel} as $parent) {
+        // Solr field values are stored as info URIs but we query Solr using
+        // PIDs, so we need to remove the namespace..
         $parent = preg_replace('#info:fedora/#', '', $parent);
         $ancestors[] = $parent;
-        if ($parent == variable_get('islandora_repository_pid', 'islandora:root')) {
+        // If we don't specify which relationship to return on, the return
+        // can be triggered prematurely for deep-nested objects with
+        // multiple parents.
+        if ($rel == 'RELS_EXT_isMemberOfCollection_uri_mt' &&
+          $parent == $repository_pid) {
           return $ancestors;
         }
         $grandparents = islandora_solr_collection_family_tree_get_ancestors($parent);
@@ -84,7 +93,8 @@ function islandora_solr_collection_family_tree_get_ancestors($pid) {
           foreach ($grandparents as $grandparent) {
             $grandparent = preg_replace('#info:fedora/#', '', $grandparent);
             $ancestors[] = $grandparent;
-            if ($grandparent == variable_get('islandora_repository_pid', 'islandora:root')) {
+            if ($rel == 'RELS_EXT_isMemberOfCollection_uri_mt' &&
+              $grandparent == $repository_pid) {
               return $ancestors;
             }
           }

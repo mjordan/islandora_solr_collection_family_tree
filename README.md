@@ -1,12 +1,12 @@
 # The problem
 
-Sometimes we need to know if an Islandora object is "in" a particular collection, despite the object's content model or what its immediate parent collection is. A couple of specific use cases where this information wold be useful are:
-* We want to determine whether an Islandora page object is a descendant of a particular collection because we want to do something with all objects that are "in" the collection, like apply a specific Drupal theme to them using [Islandora Themekey](https://github.com/mjordan/islandora_themekey).
+Sometimes we need to know if an Islandora object is "in" a particular collection, regardless of the object's content model or what its immediate parent collection is. A couple of specific use cases where this information wold be useful are:
+* We want to determine whether an Islandora page object is a descendant of a specific collection because we want to do something with all objects that are in the collection, like apply a specific Drupal theme to them using [Islandora Themekey](https://github.com/mjordan/islandora_themekey).
 * We want to represent an object's "family tree" to the user, showing all of its ancestor collections and parent objects.
 
 # The solutions
 
-The most commonly implemented way to get an object's collection (or parent compound object) memberships is to perform a SPARQL query against Fedora's Resource Index. This can be slow. Since properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using [DGI's basic solr configs](https://github.com/discoverygarden/basic-solr-config), it is possible to query Solr instead of the RI to get an object's family tree.
+The most commonly implemented way to get an object's collection (or parent compound object) memberships is to perform a SPARQL query against Fedora's Resource Index. This can be slow. Because properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using discoverygarden's [basic solr configs](https://github.com/discoverygarden/basic-solr-config), it is possible to query Solr instead of the RI to get an object's family tree.
 
 This approach is consistent with recent trends within the Islandora 7.x codebase to replace potentially expensive RI queries with Solr queries, e.g., [Islandora Solr Collection View](https://github.com/Islandora-Labs/islandora_solr_collection_view).
 
@@ -37,11 +37,43 @@ produces the following output:
 Ancestors of booktest:10 are booktest:1, islandora:bookCollection, islandora:root
 ```
 
-This implementation detects multiple collection memberships, but its output simply lists the parents/collections, it doesn't express the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:myimagecollection', which are both direct children of 'islandora:root':
+This implementation detects multiple collection memberships, but its output simply lists the parents/collections, it doesn't express the structure of the relationships. For example, 'islandora:22' is an image that is in two collections, 'islandora:sp_basic_image_collection' and 'test:myimagecollection', which are both direct children of 'islandora:root':
 
 ```
 drush islandora_get_family_tree --pid=islandora:22
 Ancestors of islandora:22 are islandora:sp_basic_image_collection, test:myimagecollection, islandora:root
+```
+
+A more complex example is for object islandora:117, which is a child of the comound object islandora:133, which itself is at the bottom of this deeply nested hierarchicy of collections:
+
+```
+islandora:root
+  islandora:compound_collection
+    collection:level2
+      collection:level3
+        collection:level4
+          collection:level5
+            islandora:133
+              islandora:117
+```
+
+islandora:117 is also an immediate child of the islandora:sp_large_image_collection, which is a child of islandora:root:
+
+```
+islandora:root
+  islandora:sp_large_image_collection
+    islandora:117
+```
+
+Issuing the following command:
+
+```
+drush islandora_get_family_tree --pid=islandora:117
+```
+produces the following output:
+
+```
+Ancestors of islandora:117 are islandora:133, collection:level5, collection:level4, collection:level3, collection:level2, islandora:compound_collection, islandora:root, islandora:sp_large_image_collection
 ```
 
 # Possible performance optimizations
