@@ -76,7 +76,7 @@ drush islandora_get_family_tree --pid=islandora:22
 Ancestors of islandora:22 are islandora:sp_basic_image_collection, test:myimagecollection, islandora:root
 ```
 
-A more complex example is for object islandora:117, which is a child of the compound object islandora:133, which itself is at the bottom of this deeply nested hierarchicy of collections:
+A more complex example is for object islandora:117, which is a child of the compound object islandora:133, which itself is at the bottom of this deeply nested hierarchicy of collections (the "diagram" below is not output from the drush command, it is a "graphical" representation of a deeply nested set of collections):
 
 ```
 islandora:root
