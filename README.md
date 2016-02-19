@@ -1,8 +1,9 @@
 # The problem
 
-Sometimes we need to know if an Islandora object is "in" a particular collection, regardless of the object's content model or what its immediate parent collection is. A couple of specific use cases where this information would be useful are:
-* We want to determine whether an Islandora page object is a descendant of a specific collection because we want to do something with all objects that are in the collection, like apply a specific Drupal theme to them using [Islandora Themekey](https://github.com/mjordan/islandora_themekey).
+Sometimes we need to know if an Islandora object is "in" a particular collection, regardless of the object's content model or, in the case of membership in nested collections, its immediate parent collection. Three specific use cases where this information would be useful are:
+* We want to determine whether an Islandora page object is a deep descendant of a high-level collection because we want to do something with all objects that are in the collection, like apply a specific Drupal theme to them using [Islandora Themekey](https://github.com/mjordan/islandora_themekey).
 * We want to represent an object's "family tree" to the user, showing all of its ancestor collections and parent objects.
+* We want to know all the collections that an object is in so that we can inform collection owners that the object has been deleted or modified in some way.
 
 # The solutions
 
@@ -33,7 +34,7 @@ This type of query works, but the Resource Index performs poorly in large reposi
 
 Because properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using discoverygarden's [basic solr configs](https://github.com/discoverygarden/basic-solr-config)), it is possible to query Solr instead of the RI to get an object's family tree. By issuing a series of efficient queries on PIDs against Solr, we can achieve the same result as the above SPARQL query.
 
-This approach is consistent with recent trends within the Islandora 7.x ecosystem to replace potentially expensive RI queries with Solr queries, e.g., [Islandora Solr Collection View](https://github.com/Islandora-Labs/islandora_solr_collection_view).
+This approach is consistent with recent trends within the Islandora 7.x ecosystem to replace potentially expensive RI queries with Solr queries, e.g., [Islandora Solr Collection View](https://github.com/Islandora-Labs/islandora_solr_collection_view) and the more general "query backend" proposal lead by [Daniel Aitken](https://github.com/qadan) at the January 28th, 2016 Islandora Committers call.
 
 # Example Solr query used in the proposed approach, and some pseudocode
 
@@ -41,7 +42,7 @@ The Solr queries required to retrive an object's relationship data are targeted 
 
 `q=PID:islandora\:1234&fl=RELS_EXT_isMemberOfCollection_uri_mt,RELS_EXT_isMemberOf_uri_mt,RELS_EXT_isConstituentOf_uri_mt`
 
-This query is efficient, but a series of these queries must be performed to walk "up" an object's family tree:
+This query is efficient, but a series of these queries must be performed to walk "up" all of the branches of an object's family tree:
 
 * Perform an initial query Solr for a PID that returns the fields containing collection or parent relationship data, as illustrated above.
   * If present in the result, RELS_EXT_isMemberOfCollection_uri_mt will contain the object's collection memberships.
