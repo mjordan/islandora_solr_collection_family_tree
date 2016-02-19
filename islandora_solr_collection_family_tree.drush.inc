@@ -27,7 +27,7 @@ function islandora_solr_collection_family_tree_drush_command() {
 }
 
 /**
- * Get an object's family tree.
+ * Get and print the members of an object's family tree.
  */
 function drush_islandora_solr_collection_family_tree_islandora_get_family_tree() {
   if (!module_exists('islandora_solr_metadata')) {
@@ -78,7 +78,7 @@ function islandora_solr_collection_family_tree_get_ancestors($pid) {
     if ($parent_memberships->{$rel}) {
       foreach ($parent_memberships->{$rel} as $parent) {
         // Solr field values are stored as info URIs but we query Solr using
-        // PIDs, so we need to remove the namespace..
+        // PIDs, so we need to remove the namespace.
         $parent = preg_replace('#info:fedora/#', '', $parent);
         $ancestors[] = $parent;
         // If we don't specify which relationship to return on, the return
