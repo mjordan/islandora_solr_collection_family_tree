@@ -97,7 +97,7 @@ islandora:root
     islandora:117
 ```
 
-Issuing the following command:
+Issuing the following command, which provides a combined list of all of these relationships:
 
 ```
 drush islandora_get_family_tree --pid=islandora:117
@@ -110,10 +110,12 @@ Ancestors of islandora:117 are islandora:133, collection:level5, collection:leve
 
 # Possible performance optimizations
 
-The proposed approach could potentially perform quite a few Solr queries, depending on how far the initial object is from the Islandora top-level collection, and the proof of concept implementation performs these queries within nested `foreach` loops. If the general approach is sound, implementations may want to find ways of reducing the number of queries or optimizing performance in other ways. For example:
+The proposed approach could potentially perform quite a few Solr queries, depending on how far the initial object is from the Islandora top-level collection, and the proof of concept implementation performs these queries within nested `foreach` loops.
 
-* Do as few Solr queries as possible, e.g., if we know that the object is not a page, ignore RELS_EXT_isMemberOf_uri_mt
-* Cache an object's family tree so we don't need to repeat the Solr queries
+If the general approach described here is sound, implementations may want to find ways of reducing the number of queries or optimizing performance in other ways. For example:
+
+* Perform as few Solr queries as possible, e.g., if we know that the object is not a page, ignore RELS_EXT_isMemberOf_uri_mt
+* Cache an object's family tree so we don't need to repeat the Solr queries, using Drupal's native caching mechanism
 * Parallelize the Solr queries that get the membership relationship data
 
 # Todo
