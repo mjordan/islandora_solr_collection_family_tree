@@ -6,9 +6,9 @@ Sometimes we need to know if an Islandora object is "in" a particular collection
 
 # The solutions
 
-The most commonly implemented way to get an object's collection (or parent compound object) memberships is to perform a SPARQL query against Fedora's Resource Index. This can be slow. Because properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using discoverygarden's [basic solr configs](https://github.com/discoverygarden/basic-solr-config), it is possible to query Solr instead of the RI to get an object's family tree.
+The most commonly implemented way to get an object's collection (or parent compound object) memberships is to perform a SPARQL query against Fedora's Resource Index. This can be slow. Because properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using discoverygarden's [basic solr configs](https://github.com/discoverygarden/basic-solr-config)), it is possible to query Solr instead of the RI to get an object's family tree.
 
-This approach is consistent with recent trends within the Islandora 7.x codebase to replace potentially expensive RI queries with Solr queries, e.g., [Islandora Solr Collection View](https://github.com/Islandora-Labs/islandora_solr_collection_view).
+This approach is consistent with recent trends within the Islandora 7.x ecosystem to replace potentially expensive RI queries with Solr queries, e.g., [Islandora Solr Collection View](https://github.com/Islandora-Labs/islandora_solr_collection_view).
 
 # Pseudocode
 
@@ -44,7 +44,7 @@ drush islandora_get_family_tree --pid=islandora:22
 Ancestors of islandora:22 are islandora:sp_basic_image_collection, test:myimagecollection, islandora:root
 ```
 
-A more complex example is for object islandora:117, which is a child of the comound object islandora:133, which itself is at the bottom of this deeply nested hierarchicy of collections:
+A more complex example is for object islandora:117, which is a child of the compound object islandora:133, which itself is at the bottom of this deeply nested hierarchicy of collections:
 
 ```
 islandora:root
@@ -92,3 +92,7 @@ The proposed approach could potentially perform quite a few Solr queries, depend
 # Proposer
 
 * [Mark Jordan](https://github.com/mjordan)
+
+# License
+
+This is free and unencumbered software released into the public domain.
