@@ -1,18 +1,49 @@
 # The problem
 
-Sometimes we need to know if an Islandora object is "in" a particular collection, regardless of the object's content model or what its immediate parent collection is. A couple of specific use cases where this information wold be useful are:
+Sometimes we need to know if an Islandora object is "in" a particular collection, regardless of the object's content model or what its immediate parent collection is. A couple of specific use cases where this information would be useful are:
 * We want to determine whether an Islandora page object is a descendant of a specific collection because we want to do something with all objects that are in the collection, like apply a specific Drupal theme to them using [Islandora Themekey](https://github.com/mjordan/islandora_themekey).
 * We want to represent an object's "family tree" to the user, showing all of its ancestor collections and parent objects.
 
 # The solutions
 
-The most commonly implemented way to get an object's collection (or parent compound object) memberships is to perform a SPARQL query against Fedora's Resource Index. This can be slow. Because properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using discoverygarden's [basic solr configs](https://github.com/discoverygarden/basic-solr-config)), it is possible to query Solr instead of the RI to get an object's family tree.
+The most commonly implemented way to get an object's collection (or parent compound object) memberships is to perform a SPARQL query against Fedora's Resource Index. For example:
+
+```php
+        // If the object is a book page or a newspaper issue, query the RI
+        // to get its ancestor collections.
+        $object_cmodel_pids = $islandora_object->models;
+        if ($object_cmodel_pids[0] == 'islandora:newspaperIssueCModel'
+          || $object_cmodel_pids[0] == 'islandora:pageCModel') {
+          $query = <<<EOQ
+            select ?collection from <#ri> where {
+              # Get the collection that book pages and newspaper issues belong to.
+              <info:fedora/$pid> <fedora-rels-ext:isMemberOf> ?parent .
+              ?parent <fedora-rels-ext:isMemberOfCollection> ?collection .
+            }
+EOQ;
+          $connection = islandora_get_tuque_connection();
+          $results = $connection->repository->ri->sparqlQuery($query, 1);
+          foreach ($results as $result) {
+            $collection_pids[] = $result['collection']['value'];
+          }
+          return $collection_pids;
+```
+
+This type of query works, but the Resource Index performs poorly in large repositories.
+
+Because properties that describe an object's relationship with its parent collections and objects are indexed in Solr (at least using discoverygarden's [basic solr configs](https://github.com/discoverygarden/basic-solr-config)), it is possible to query Solr instead of the RI to get an object's family tree. By issuing a series of efficient queries on PIDs against Solr, we can achieve the same result as the above SPARQL query.
 
 This approach is consistent with recent trends within the Islandora 7.x ecosystem to replace potentially expensive RI queries with Solr queries, e.g., [Islandora Solr Collection View](https://github.com/Islandora-Labs/islandora_solr_collection_view).
 
-# Pseudocode
+# Example Solr query used in the proposed approach, and some pseudocode
 
-* Perform an initial query Solr for a PID that returns the fields containing collection or parent relationship data: `q=PID:islandora\:something&fl=RELS_EXT_isMemberOfCollection_uri_mt,RELS_EXT_isMemberOf_uri_mt,RELS_EXT_isConstituentOf_uri_mt`
+The Solr queries required to retrive an object's relationship data are targeted and efficent. The only query term is the object's PID, and the only fields returned by the query are those containing parent-child data. An example query used by this approach is:
+
+`q=PID:islandora\:1234&fl=RELS_EXT_isMemberOfCollection_uri_mt,RELS_EXT_isMemberOf_uri_mt,RELS_EXT_isConstituentOf_uri_mt`
+
+This query is efficient, but a series of these queries must be performed to walk "up" an object's family tree:
+
+* Perform an initial query Solr for a PID that returns the fields containing collection or parent relationship data, as illustrated above.
   * If present in the result, RELS_EXT_isMemberOfCollection_uri_mt will contain the object's collection memberships.
     * Perform additional queries to get the ancestor collections all the way up to the root collection.
     * Add resulting collection PIDs to a list for use later.
@@ -21,7 +52,7 @@ This approach is consistent with recent trends within the Islandora 7.x ecosyste
     * Add resulting parent object and collection PIDs to a list for use later.
 * Do what you want with the resulting list - check it to see if a particular collection that you want to apply policies to is in the list, render the list to the end user, etc.
 
-# Proof of concept code
+# Proof of concept implementation
 
 The drush command supplied with this module provides a proof of concept implementation for getting the PIDs of all collections and parent compound objects an object is part of. 
 
